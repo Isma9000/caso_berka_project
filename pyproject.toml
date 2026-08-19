@@ -1,0 +1,32 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "caso_berka_model"
+version = "0.0.1"
+description = "Modelo predictivo supervisado que permita clasificar clientes buenos y malos para la asignaci\u00f3n de tarjetas de cr\u00e9dito"
+authors = [
+  { name = "Team 8" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License"
+]
+requires-python = "~=3.13.0"
+
+
+[tool.ruff]
+line-length = 99
+src = ["caso_berka_model"]
+include = ["pyproject.toml", "caso_berka_model/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["caso_berka_model"]
+force-sort-within-sections = true
+
