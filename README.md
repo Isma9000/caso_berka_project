@@ -7,11 +7,12 @@
 Modelo predictivo supervisado que permita clasificar clientes buenos y malos para la asignación de tarjetas de crédito.
 
 Realizado por el grupo:
- Ayala Torrico Adriana Nicole ,
- Poma Limache Alisson Daniela,
- Fuentes Rios Beatriz,
- Peralta Fernández Ismael,
- Vargas Orellana José Roberto
+
+ - Ayala Torrico Adriana Nicole ,
+ -  Poma Limache Alisson Daniela,
+ -  Fuentes Rios Beatriz,
+ -  Peralta Fernández Ismael,
+ -  Vargas Orellana José Roberto
 
 ## Project Organization
 
