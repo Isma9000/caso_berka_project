@@ -1,0 +1,76 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -m caso_berka_model.dataset
+    deps:
+    - path: caso_berka_model/config.py
+      hash: md5
+      md5: 838446a4d6f24ecaa16eaaae5b45617c
+      size: 457
+    - path: caso_berka_model/dataset.py
+      hash: md5
+      md5: c6845bfa50767dc2f4dc451a361e64d1
+      size: 4166
+    - path: caso_berka_model/features.py
+      hash: md5
+      md5: a7eb5abc116332862980a5d102eadcdf
+      size: 8929
+    - path: data/raw
+      hash: md5
+      md5: a07e1fcfb057f2290155154ff4f3f71a.dir
+      size: 70125469
+      nfiles: 8
+    outs:
+    - path: data/processed/tabla_minable.csv
+      hash: md5
+      md5: 3836d9361cd9858f429ed367fcedb601
+      size: 1031853
+  train:
+    cmd: python -m caso_berka_model.modeling.train
+    deps:
+    - path: caso_berka_model/modeling/predict.py
+      hash: md5
+      md5: faddd20f03ca947c9769ee814c135db5
+      size: 2878
+    - path: caso_berka_model/modeling/train.py
+      hash: md5
+      md5: a1c0f087cb726f5bd730d251a3984bea
+      size: 11512
+    - path: caso_berka_model/plots.py
+      hash: md5
+      md5: c8de2c7286b6226ce577c7e6f3892834
+      size: 7410
+    - path: data/processed/tabla_minable.csv
+      hash: md5
+      md5: 3836d9361cd9858f429ed367fcedb601
+      size: 1031853
+    params:
+      params.yaml:
+        decision_tree.class_weight: balanced
+        decision_tree.criterion: gini
+        decision_tree.max_depth:
+        knn.k_max: 20
+        knn.k_min: 1
+        knn.weights: distance
+        logistic_regression.class_weight: balanced
+        logistic_regression.max_iter: 1000
+        random_forest.class_weight: balanced_subsample
+        random_forest.max_depth:
+        random_forest.min_samples_leaf: 3
+        random_forest.n_estimators: 400
+        selection.metric: F1
+        split.random_state: 42
+        split.test_size: 0.3
+    outs:
+    - path: models/best_model.joblib
+      hash: md5
+      md5: 1c5cf6cc2ea54b72fce3ee76ecb0d9f1
+      size: 6142329
+    - path: reports/metricas_modelos.csv
+      hash: md5
+      md5: f7b644d2ea43996ee1552466a5a7b106
+      size: 578
+    - path: reports/tabla_deciles.csv
+      hash: md5
+      md5: 0298c21577aeb13a408c3b398b8553da
+      size: 1177

@@ -1,0 +1,29 @@
+prepare:
+  null_threshold: 0.60
+
+split:
+  test_size: 0.30
+  random_state: 42
+
+logistic_regression:
+  max_iter: 1000
+  class_weight: balanced
+
+knn:
+  k_min: 1
+  k_max: 20
+  weights: distance
+
+decision_tree:
+  criterion: gini
+  max_depth: null
+  class_weight: balanced
+
+random_forest:
+  n_estimators: 400
+  max_depth: null
+  min_samples_leaf: 3
+  class_weight: balanced_subsample
+
+selection:
+  metric: F1
