@@ -4,7 +4,15 @@
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
-Modelo predictivo supervisado que permita clasificar clientes buenos y malos para la asignación de tarjetas de crédito
+Modelo predictivo supervisado que permita clasificar clientes buenos y malos para la asignación de tarjetas de crédito.
+
+Realizado por el grupo:
+
+ - Ayala Torrico Adriana Nicole ,
+ -  Poma Limache Alisson Daniela,
+ -  Fuentes Rios Beatriz,
+ -  Peralta Fernández Ismael,
+ -  Vargas Orellana José Roberto
 
 ## Project Organization
 
