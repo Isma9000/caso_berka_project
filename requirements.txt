@@ -7,3 +7,10 @@ ruff
 tqdm
 typer
 -e .
+
+pandas
+numpy
+scikit-learn
+matplotlib
+joblib
+pytest
