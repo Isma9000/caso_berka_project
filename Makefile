@@ -3,8 +3,11 @@
 #################################################################################
 
 PROJECT_NAME = caso_berka_project
-PYTHON_VERSION = 3.13
+PYTHON_VERSION = 3.14
 PYTHON_INTERPRETER = python
+ifneq (,$(wildcard .venv/bin/python))
+PYTHON_INTERPRETER = .venv/bin/python
+endif
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -64,7 +67,27 @@ create_environment:
 ## Make dataset
 .PHONY: data
 data: requirements
-	$(PYTHON_INTERPRETER) caso_berka_model/dataset.py
+	$(PYTHON_INTERPRETER) -m caso_berka_model.dataset
+
+## Train models
+.PHONY: train
+train:
+	$(PYTHON_INTERPRETER) -m caso_berka_model.modeling.train
+
+## Reproduce the DVC pipeline
+.PHONY: dvc-repro
+dvc-repro:
+	PATH="$(CURDIR)/.venv/bin:$(PATH)" dvc repro
+
+## Pull data from the local DVC remote
+.PHONY: dvc-pull
+dvc-pull:
+	PATH="$(CURDIR)/.venv/bin:$(PATH)" dvc pull
+
+## Push data to the local DVC remote
+.PHONY: dvc-push
+dvc-push:
+	PATH="$(CURDIR)/.venv/bin:$(PATH)" dvc push
 
 
 #################################################################################

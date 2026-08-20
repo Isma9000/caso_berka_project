@@ -1,0 +1,65 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python -m caso_berka_model.dataset
+    deps:
+    - path: caso_berka_model/dataset.py
+      hash: md5
+      md5: a8e9b48710154f87a1932a2863ed755c
+      size: 2650
+    - path: caso_berka_model/features.py
+      hash: md5
+      md5: bd07f81e333c559d4fc21d01c548ad41
+      size: 8454
+    - path: data/raw
+      hash: md5
+      md5: b2a0c92d741f6515119a0dbee7657bfd.dir
+      size: 70125469
+      nfiles: 9
+    params:
+      params.yaml:
+        prepare.null_threshold: 0.6
+    outs:
+    - path: data/processed/tabla_minable.csv
+      hash: md5
+      md5: 691b4912a0d6894ee255bf8897045b6f
+      size: 1026483
+  train:
+    cmd: python -m caso_berka_model.modeling.train
+    deps:
+    - path: caso_berka_model/modeling/predict.py
+      hash: md5
+      md5: dea8f45684cb9ebcc46906baf419feee
+      size: 2308
+    - path: caso_berka_model/modeling/train.py
+      hash: md5
+      md5: 99d725df6cae02609087c16c34b57281
+      size: 9848
+    - path: caso_berka_model/plots.py
+      hash: md5
+      md5: 27c59d8602b1852ee1be8400647d5f67
+      size: 6961
+    - path: data/processed/tabla_minable.csv
+      hash: md5
+      md5: 691b4912a0d6894ee255bf8897045b6f
+      size: 1026483
+    params:
+      params.yaml:
+        prepare.random_state: 42
+        prepare.split_ratio: 0.3
+        train.max_depth:
+        train.n_estimators: 400
+        train.target_col: buen_cliente
+    outs:
+    - path: metrics/eval.json
+      hash: md5
+      md5: f021f742144fd7d4ccc7d0d8ac76f2e4
+      size: 145
+    - path: metrics/plots.csv
+      hash: md5
+      md5: 188ee578f3bf9804a646db7714deecca
+      size: 6461
+    - path: models/best_model.joblib
+      hash: md5
+      md5: e701a98210eeaba95bde384e9c62ab2d
+      size: 6142361

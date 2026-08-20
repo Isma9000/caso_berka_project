@@ -1,9 +1,10 @@
-# Data
-#/data/
-# No subir archivos CSV de datos
+# Data — archivos pesados gestionados por DVC (no subir a Git)
 *.csv
 *.png
 *.asc
+!metrics/*.csv
+!metrics/*.json
+*.joblib
 # Mac OS-specific storage files
 .DS_Store
 
@@ -40,6 +41,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+dvc_storage_remote/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
