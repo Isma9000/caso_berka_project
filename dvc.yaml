@@ -1,36 +1,51 @@
 stages:
-  preprocess:
+
+  prepare:
     cmd: python -m caso_berka_model.dataset
+
     deps:
       - caso_berka_model/dataset.py
       - caso_berka_model/features.py
+      - caso_berka_model/config.py
       - data/raw
-    params:
-      - prepare.null_threshold
+
     outs:
       - data/processed/tabla_minable.csv
 
+
   train:
     cmd: python -m caso_berka_model.modeling.train
+
     deps:
       - caso_berka_model/modeling/train.py
       - caso_berka_model/modeling/predict.py
       - caso_berka_model/plots.py
       - data/processed/tabla_minable.csv
+
     params:
-      - prepare.split_ratio
-      - prepare.random_state
-      - train.n_estimators
-      - train.max_depth
-      - train.target_col
+      - split.test_size
+      - split.random_state
+      - logistic_regression.max_iter
+      - logistic_regression.class_weight
+      - knn.k_min
+      - knn.k_max
+      - knn.weights
+      - decision_tree.criterion
+      - decision_tree.max_depth
+      - decision_tree.class_weight
+      - random_forest.n_estimators
+      - random_forest.max_depth
+      - random_forest.min_samples_leaf
+      - random_forest.class_weight
+      - selection.metric
+
     outs:
       - models/best_model.joblib
+
     metrics:
-      - metrics/eval.json:
+      - reports/metricas_modelos.csv:
           cache: false
+
     plots:
-      - metrics/plots.csv:
-          template: confusion
-          x: predicted
-          y: actual
+      - reports/tabla_deciles.csv:
           cache: false
