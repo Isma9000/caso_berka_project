@@ -4,7 +4,6 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -20,6 +19,7 @@ from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.tree import DecisionTreeClassifier
+import yaml
 
 from caso_berka_model.config import (
     METRICS_DIR,
@@ -277,6 +277,43 @@ class ModelTrainer:
         )
         importance_df.to_csv(REPORTS_DIR / "importancia_variables.csv", index=False)
         decile_table.to_csv(REPORTS_DIR / "tabla_deciles.csv", index=False)
+
+        self._log_to_mlflow(
+            modelos=modelos,
+            resultados_df=resultados_df,
+            X_train=X_train,
+            y_train=y_train,
+            X_test=X_test,
+            y_test=y_test,
+            best_model_name=best_model_name,
+        )
+
+    def _log_to_mlflow(
+        self,
+        modelos,
+        resultados_df,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        best_model_name,
+    ) -> None:
+        mlflow_cfg = self.params.get("mlflow") or {}
+        if not mlflow_cfg.get("enabled", False):
+            return
+
+        from caso_berka_model.mlflow_engine.run import log_and_register
+
+        log_and_register(
+            modelos=modelos,
+            resultados_df=resultados_df,
+            X_train=X_train,
+            y_train=y_train,
+            X_test=X_test,
+            y_test=y_test,
+            best_model_name=best_model_name,
+            params=self.params,
+        )
 
 
 def main():

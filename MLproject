@@ -1,0 +1,7 @@
+name: caso_berka_mlflow
+
+python_env: python_env.yaml
+
+entry_points:
+  main:
+    command: "python -m caso_berka_model.mlflow_engine.run"

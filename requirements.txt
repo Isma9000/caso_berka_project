@@ -12,6 +12,8 @@ pandas
 numpy
 scikit-learn
 matplotlib
+seaborn
 joblib
 pyyaml
 dvc
+mlflow>=2.17

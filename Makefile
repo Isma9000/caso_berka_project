@@ -89,6 +89,21 @@ dvc-pull:
 dvc-push:
 	PATH="$(CURDIR)/.venv/bin:$(PATH)" dvc push
 
+## Train models and log the run to local MLflow (SQLite)
+.PHONY: mlflow-train
+mlflow-train:
+	$(PYTHON_INTERPRETER) -m caso_berka_model.mlflow_engine.run
+
+## Open the local MLflow UI (http://127.0.0.1:5000)
+.PHONY: mlflow-ui
+mlflow-ui:
+	$(PYTHON_INTERPRETER) -m mlflow ui --backend-store-uri sqlite:///$(CURDIR)/mlflow.db --host 127.0.0.1 --port 5000
+
+## Serve the Production model from the local Model Registry
+.PHONY: mlflow-serve
+mlflow-serve:
+	MLFLOW_TRACKING_URI=sqlite:///$(CURDIR)/mlflow.db $(PYTHON_INTERPRETER) -m mlflow models serve --model-uri models:/Berka_BuenCliente@Production --host 0.0.0.0 --port 8080 --env-manager local
+
 
 #################################################################################
 # Self Documenting Commands                                                     #

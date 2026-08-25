@@ -11,3 +11,12 @@ train:
   knn_k_max: 20
   target_col: "buen_cliente"
   selection_metric: F1
+
+mlflow:
+  enabled: true
+  tracking_uri: sqlite:///mlflow.db
+  experiment_name: Berka_Credit_Classification
+  registered_model_name: Berka_BuenCliente
+  decision_threshold: 0.65
+  promote_to_production: true
+  run_evaluate: true

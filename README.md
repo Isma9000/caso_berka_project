@@ -104,6 +104,33 @@ dvc metrics diff HEAD
 
 Hiperparámetros en [`params.yaml`](params.yaml). Tras editarlos, vuelve a correr `dvc repro`.
 
+### 8. MLflow (tracking local + Model Registry)
+
+El entrenamiento registra experimentos en **SQLite local** (`mlflow.db`) y artefactos en `mlruns/`. No hace falta un servidor remoto. En Python 3.14 se instala MLflow 3.x (MLflow 2.x exige `pyarrow<20`, sin wheel para 3.14); el registry escribe tanto el *stage* `Production` como el alias `@Production`.
+
+```bash
+# Entrenar, loguear métricas/artefactos y promover el PyFunc a Production
+make mlflow-train
+# equivalente:
+python -m caso_berka_model.mlflow_engine.run
+
+# UI en http://127.0.0.1:5000
+make mlflow-ui
+# equivalente:
+mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
+
+# Serving REST del modelo en Production (opcional)
+make mlflow-serve
+```
+
+También puedes lanzar el entry point declarativo:
+
+```bash
+mlflow run . --env-manager local
+```
+
+Configuración en [`params.yaml`](params.yaml) (`mlflow.*`): experimento `Berka_Credit_Classification`, modelo registrado `Berka_BuenCliente`, umbral de decisión `0.65`. `make train` y el stage DVC `train` también escriben el run si `mlflow.enabled` es `true`.
+
 ---
 
 ## Git vs DVC: qué va en cada uno
@@ -117,6 +144,7 @@ Hiperparámetros en [`params.yaml`](params.yaml). Tras editarlos, vuelve a corre
 | Dataset procesado (`data/processed/tabla_minable.csv`) | No | Sí | `*.csv` |
 | Modelo (`models/best_model.joblib`) | No | Sí | `models/.gitignore` |
 | Métricas DVC (`metrics/eval.json`, `metrics/plots.csv`) | Sí | — | excepción `!metrics/*` |
+| Tracking MLflow (`mlflow.db`, `mlruns/`) | No | — | `mlflow.db`, `mlruns/`, `mlartifacts/` |
 | Gráficos (`reports/figures/*.png`) | No | — | `*.png` |
 | Reportes CSV (`reports/*.csv`) | No | — | `*.csv` |
 | Entorno (`.venv/`) | No | — | `.venv` |
@@ -136,6 +164,8 @@ Dataset: (5369, 21) | predictoras: (5369, 8)
 Mejor modelo seleccionado: Random Forest
 [ModelTrainer] Modelo guardado en: .../models/best_model.joblib
 [Evaluator] Métricas guardadas en: .../metrics/
+[MLflow] Run padre=... | mejor=Random Forest | F1=0.97...
+[Registry] Modelo 'Berka_BuenCliente' versión 1 asignado al alias Production
 ```
 
 Verifica que los archivos pesados **no** están en el índice de Git:
@@ -155,8 +185,9 @@ Comandos de salud del proyecto:
 
 ```bash
 dvc status          # Data and pipelines are up to date.
-pytest tests        # 2 passed
+pytest tests        # tests de datos + tracking MLflow
 dvc metrics show    # accuracy ~0.98, f1_score ~0.97
+ls mlflow.db        # backend SQLite local tras make mlflow-train
 ```
 
 ---
@@ -164,7 +195,9 @@ dvc metrics show    # accuracy ~0.98, f1_score ~0.97
 ```
 ├── LICENSE            <- Open-source license if one is chosen
 ├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
-├── params.yaml        <- Hiperparámetros del pipeline DVC
+├── MLproject          <- Entry point declarativo: mlflow run . --env-manager local
+├── python_env.yaml    <- Entorno reproducible para MLflow Projects
+├── params.yaml        <- Hiperparámetros del pipeline DVC y config MLflow
 ├── dvc.yaml           <- Stages preprocess y train
 ├── README.md          <- The top-level README for developers using this project.
 ├── data
@@ -209,7 +242,16 @@ dvc metrics show    # accuracy ~0.98, f1_score ~0.97
     │   ├── predict.py          <- Code to run model inference with trained models          
     │   └── train.py            <- Code to train models
     │
-    └── plots.py                <- Code to create visualizations
+    ├── plots.py                <- Code to create visualizations
+    │
+    └── mlflow_engine           <- Tracking, PyFunc, evaluate y Model Registry
+        ├── lineage.py          <- Hashes Git/DVC para tags de trazabilidad
+        ├── artifacts.py        <- Matriz de confusión y curva ROC
+        ├── pyfunc.py           <- Wrapper con umbral de decisión
+        ├── evaluator.py        <- mlflow.evaluate sobre el modelo sklearn
+        ├── trainer.py          <- Nested runs y registro del mejor modelo
+        ├── registry.py         <- Promoción a Production
+        └── run.py              <- Orquestación: python -m caso_berka_model.mlflow_engine.run
 ```
 
 --------
