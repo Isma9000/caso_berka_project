@@ -119,8 +119,32 @@ make mlflow-ui
 # equivalente:
 mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 
-# Serving REST del modelo en Production (opcional)
+# Serving REST genérico MLflow del modelo en Production (puerto 8080)
 make mlflow-serve
+
+# API FastAPI custom (puerto 8000): carga Berka_BuenCliente@Production
+make api-serve
+```
+
+La API expone `GET /`, `GET /health` y `POST /predict` (features ya preprocesadas). Docs interactivas en `http://127.0.0.1:8000/docs`.
+
+Ejemplo de inferencia:
+
+```bash
+curl -s http://127.0.0.1:8000/predict \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "data": [{
+      "birth_number": 591001.0,
+      "date": 931008.0,
+      "cantidad_ingresos": 0.97,
+      "total_egresos": -0.18,
+      "cantidad_egresos": 1.94,
+      "tiene_prestamo": 0.0,
+      "monto_prestamo": -0.33,
+      "tiene_tarjeta": 0.0
+    }]
+  }'
 ```
 
 También puedes lanzar el entry point declarativo:
@@ -236,6 +260,11 @@ ls mlflow.db        # backend SQLite local tras make mlflow-train
     ├── dataset.py              <- Scripts to download or generate data
     │
     ├── features.py             <- Code to create features for modeling
+    │
+    ├── api                     <- FastAPI: carga Production y /predict
+    │   ├── main.py             <- App uvicorn (make api-serve)
+    │   ├── model_loader.py     <- Puente al Model Registry
+    │   └── schemas.py          <- Contrato de 8 features preprocesadas
     │
     ├── modeling                
     │   ├── __init__.py 

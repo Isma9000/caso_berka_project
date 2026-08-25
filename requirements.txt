@@ -17,3 +17,6 @@ joblib
 pyyaml
 dvc
 mlflow>=2.17
+fastapi
+uvicorn[standard]
+httpx

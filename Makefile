@@ -104,6 +104,11 @@ mlflow-ui:
 mlflow-serve:
 	MLFLOW_TRACKING_URI=sqlite:///$(CURDIR)/mlflow.db $(PYTHON_INTERPRETER) -m mlflow models serve --model-uri models:/Berka_BuenCliente@Production --host 0.0.0.0 --port 8080 --env-manager local
 
+## Serve the custom FastAPI prediction API (Production PyFunc)
+.PHONY: api-serve
+api-serve:
+	MLFLOW_TRACKING_URI=sqlite:///$(CURDIR)/mlflow.db $(PYTHON_INTERPRETER) -m uvicorn caso_berka_model.api.main:app --host 0.0.0.0 --port 8000
+
 
 #################################################################################
 # Self Documenting Commands                                                     #

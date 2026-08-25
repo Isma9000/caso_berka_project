@@ -31,10 +31,7 @@ class MLflowGovernanceManager:
                     stage="Production",
                     archive_existing_versions=True,
                 )
-                print(
-                    f"[Registry] Modelo '{model_name}' versión {version} "
-                    "promovido a Production"
-                )
+                print(f"[Registry] Modelo '{model_name}' versión {version} promovido a Production")
             except Exception as exc:  # noqa: BLE001
                 print(f"[Registry] Stages no disponibles, usando alias: {exc}")
 
@@ -43,13 +40,25 @@ class MLflowGovernanceManager:
             alias="Production",
             version=version_str,
         )
-        print(
-            f"[Registry] Modelo '{model_name}' versión {version} "
-            "asignado al alias Production"
-        )
+        print(f"[Registry] Modelo '{model_name}' versión {version} asignado al alias Production")
 
     def production_model_uri(self, model_name: str) -> str:
         return f"models:/{model_name}@Production"
+
+    def get_production_metadata(self, model_name: str) -> dict[str, str]:
+        """Devuelve version y run_id del modelo en Production (alias o stage)."""
+        try:
+            mv = self.client.get_model_version_by_alias(model_name, "Production")
+            return {"version": str(mv.version), "run_id": str(mv.run_id)}
+        except Exception as exc:  # noqa: BLE001
+            print(f"[Registry] Alias Production no disponible, probando stage: {exc}")
+
+        versions = self.client.search_model_versions(f"name='{model_name}'")
+        for mv in versions:
+            if getattr(mv, "current_stage", None) == "Production":
+                return {"version": str(mv.version), "run_id": str(mv.run_id)}
+
+        raise RuntimeError(f"No se encontró metadata de Production para '{model_name}'.")
 
     def load_latest_production_model(self, model_name: str):
         uris = [
@@ -63,6 +72,4 @@ class MLflowGovernanceManager:
                 return mlflow.pyfunc.load_model(model_uri)
             except Exception as exc:  # noqa: BLE001
                 last_error = exc
-        raise RuntimeError(
-            f"No se pudo cargar '{model_name}' en Production: {last_error}"
-        )
+        raise RuntimeError(f"No se pudo cargar '{model_name}' en Production: {last_error}")
