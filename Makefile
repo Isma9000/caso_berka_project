@@ -109,6 +109,24 @@ mlflow-serve:
 api-serve:
 	MLFLOW_TRACKING_URI=sqlite:///$(CURDIR)/mlflow.db $(PYTHON_INTERPRETER) -m uvicorn caso_berka_model.api.main:app --host 0.0.0.0 --port 8000
 
+## Copy Production PyFunc artifacts to models/docker_production for the Docker image
+.PHONY: docker-prepare-model
+docker-prepare-model:
+	$(PYTHON_INTERPRETER) -m caso_berka_model.api.prepare_docker_model
+
+## Build the API Docker image (prepares Production model first)
+.PHONY: docker-build
+docker-build: docker-prepare-model
+	docker build -t caso-berka-api .
+
+## Run the API container on port 8000
+.PHONY: docker-run
+docker-run:
+	docker run --rm -p 8000:8000 \
+		--env-file models/docker_meta.env \
+		-e ENVIRONMENT=docker \
+		caso-berka-api
+
 
 #################################################################################
 # Self Documenting Commands                                                     #

@@ -1,1 +1,3 @@
 /best_model.joblib
+/docker_production/
+/docker_meta.env

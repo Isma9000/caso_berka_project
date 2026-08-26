@@ -1,0 +1,34 @@
+.git
+.venv
+venv
+__pycache__
+**/__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+.idea
+.vscode
+
+# Datos y caches pesados (no necesarios para servir la API)
+data/raw
+data/interim
+.dvc/cache
+dvc_storage_remote
+
+# MLflow host-path registry (se usa models/docker_production)
+mlflow.db
+mlruns
+mlartifacts
+
+# Notebooks y sitio MkDocs
+*.ipynb
+docs/site
+
+# Artefacto joblib local (la imagen lleva models/docker_production)
+models/best_model.joblib
+
+.dockerignore
