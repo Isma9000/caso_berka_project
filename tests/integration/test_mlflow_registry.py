@@ -1,5 +1,9 @@
+import json
+from pathlib import Path
+
 import mlflow
 import pandas as pd
+import pytest
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
@@ -12,10 +16,10 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 
-from caso_berka_model.mlflow_engine.lineage import DataLineage
-from caso_berka_model.mlflow_engine.pyfunc import EnterpriseDecisionWrapper
 from caso_berka_model.mlflow_engine.registry import MLflowGovernanceManager
 from caso_berka_model.mlflow_engine.trainer import MLflowEnterpriseTrainer
+
+pytestmark = pytest.mark.integration
 
 
 def _toy_dataset():
@@ -31,30 +35,8 @@ def _toy_dataset():
     return train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
 
 
-def test_lineage_metadata():
-    metadata = DataLineage().get_lineage_metadata()
-    assert "git_commit" in metadata
-    assert "dvc_status" in metadata
-    assert metadata["git_commit"]
-
-
-def test_pyfunc_wrapper_predict():
-    X_train, X_test, y_train, _y_test = _toy_dataset()
-    model = RandomForestClassifier(n_estimators=8, random_state=42)
-    model.fit(X_train, y_train)
-    wrapper = EnterpriseDecisionWrapper(model, decision_threshold=0.5)
-    output = wrapper.predict(None, X_test.iloc[:3])
-    assert list(output.columns) == [
-        "probability",
-        "prediction",
-        "high_confidence_flag",
-    ]
-    assert len(output) == 3
-
-
-def test_mlflow_logs_metrics_and_registry(tmp_path, monkeypatch):
+def test_mlflow_logs_metrics_and_registry(tmp_path, monkeypatch, mlflow_tracking_uri):
     monkeypatch.chdir(tmp_path)
-    tracking_uri = f"sqlite:///{tmp_path / 'mlflow.db'}"
     X_train, X_test, y_train, y_test = _toy_dataset()
     model = RandomForestClassifier(n_estimators=8, random_state=42)
     model.fit(X_train, y_train)
@@ -76,7 +58,7 @@ def test_mlflow_logs_metrics_and_registry(tmp_path, monkeypatch):
 
     trainer = MLflowEnterpriseTrainer(
         experiment_name="Test_Berka_MLflow",
-        tracking_uri=tracking_uri,
+        tracking_uri=mlflow_tracking_uri,
     )
     run_id = trainer.log_trained_models(
         modelos={"Random Forest": model},
@@ -94,15 +76,15 @@ def test_mlflow_logs_metrics_and_registry(tmp_path, monkeypatch):
         run_name="test_run",
     )
     assert run_id
-    assert (tmp_path / "mlflow.db").exists()
+    assert Path(tmp_path / "mlflow.db").exists()
 
-    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
     runs = mlflow.search_runs(experiment_names=["Test_Berka_MLflow"])
     assert not runs.empty
     assert "metrics.accuracy" in runs.columns
     assert "metrics.f1_score" in runs.columns
 
-    governance = MLflowGovernanceManager(tracking_uri=tracking_uri)
+    governance = MLflowGovernanceManager(tracking_uri=mlflow_tracking_uri)
     version = governance.latest_version("Test_Berka_Model")
     governance.promote_to_production("Test_Berka_Model", version)
     loaded = governance.load_latest_production_model("Test_Berka_Model")

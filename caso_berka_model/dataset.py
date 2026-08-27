@@ -5,7 +5,6 @@ import yaml
 
 from caso_berka_model.config import (
     PARAMS_PATH,
-    PROCESSED_DATA_DIR,
     RAW_DATA_DIR,
     TABLA_MINABLE,
 )

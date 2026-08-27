@@ -1,4 +1,71 @@
 site_name: Caso Banco Berka
-# 
 site_author: Team 8
-# 
+site_description: Documentación técnica MLOps — clasificación de clientes del Banco Berka
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Cambiar a modo oscuro
+    - scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Cambiar a modo claro
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - toc.follow
+
+nav:
+  - Inicio: index.md
+  - Guía rápida: getting-started.md
+  - Requisitos del informe:
+      - "1. Introducción y objetivos": 01-introduccion.md
+      - "2. Conjunto de datos": 02-conjunto-datos.md
+      - "3. Estructura y metodología": 03-estructura.md
+      - "4. Control de versiones (DVC)": 04-dvc.md
+      - "5. POO y PEP8": 05-poo-pep8.md
+      - "6. Experimentos con MLflow": 06-mlflow.md
+      - "7. Estrategia de testing": 07-testing.md
+      - "8. Productivización FastAPI": 08-fastapi.md
+      - "9. Contenerización Docker": 09-docker.md
+      - "10. Git y trabajo colaborativo": 10-gitflow.md
+  - Guía de diapositivas: slides.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Isma9000/caso_berka_project

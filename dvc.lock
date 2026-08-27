@@ -1,24 +1,25 @@
 schema: '2.0'
 stages:
-  preprocess:
+  prepare:
     cmd: python -m caso_berka_model.dataset
     deps:
+    - path: caso_berka_model/config.py
+      hash: md5
+      md5: 838446a4d6f24ecaa16eaaae5b45617c
+      size: 457
     - path: caso_berka_model/dataset.py
       hash: md5
-      md5: e5a1d534e0407845952fd025e8efb028
-      size: 2733
+      md5: c6845bfa50767dc2f4dc451a361e64d1
+      size: 4166
     - path: caso_berka_model/features.py
       hash: md5
-      md5: dd3bb7bac88f26190ca63fe418267096
-      size: 8695
+      md5: a7eb5abc116332862980a5d102eadcdf
+      size: 8929
     - path: data/raw
       hash: md5
-      md5: d517c274d6f69aa3af8107c166885180.dir
-      size: 70755446
-      nfiles: 9
-    params:
-      params.yaml:
-        prepare.null_threshold: 0.6
+      md5: a07e1fcfb057f2290155154ff4f3f71a.dir
+      size: 70125469
+      nfiles: 8
     outs:
     - path: data/processed/tabla_minable.csv
       hash: md5
@@ -29,17 +30,17 @@ stages:
     deps:
     - path: caso_berka_model/mlflow_engine
       hash: md5
-      md5: fcff91749fe29bd68d75a66d38cf31a0.dir
-      size: 54017
+      md5: 4b881afafbb813cfa6c1585fba7807a4.dir
+      size: 59098
       nfiles: 18
     - path: caso_berka_model/modeling/predict.py
       hash: md5
-      md5: 38041185b1e405edf34fcb37f6f137ae
-      size: 2376
+      md5: faddd20f03ca947c9769ee814c135db5
+      size: 2878
     - path: caso_berka_model/modeling/train.py
       hash: md5
-      md5: a28b4ab103e2cf3659f79537da267ac8
-      size: 11164
+      md5: 4d810658f8edda3590934fb035061ab3
+      size: 10790
     - path: caso_berka_model/plots.py
       hash: md5
       md5: c8de2c7286b6226ce577c7e6f3892834
@@ -57,15 +58,15 @@ stages:
         train.n_estimators: 400
         train.target_col: buen_cliente
     outs:
-    - path: metrics/eval.json
-      hash: md5
-      md5: b88d8388f8081ca109fbce469201624a
-      size: 150
-    - path: metrics/plots.csv
-      hash: md5
-      md5: 296b66ae9bad174347d1cb41657aa323
-      size: 8073
     - path: models/best_model.joblib
       hash: md5
       md5: 1c5cf6cc2ea54b72fce3ee76ecb0d9f1
       size: 6142329
+    - path: reports/metricas_modelos.csv
+      hash: md5
+      md5: f7b644d2ea43996ee1552466a5a7b106
+      size: 578
+    - path: reports/tabla_deciles.csv
+      hash: md5
+      md5: 0298c21577aeb13a408c3b398b8553da
+      size: 1177

@@ -1,23 +1,28 @@
 stages:
-  preprocess:
+
+  prepare:
     cmd: python -m caso_berka_model.dataset
+
     deps:
       - caso_berka_model/dataset.py
       - caso_berka_model/features.py
+      - caso_berka_model/config.py
       - data/raw
-    params:
-      - prepare.null_threshold
+
     outs:
       - data/processed/tabla_minable.csv
 
+
   train:
     cmd: python -m caso_berka_model.modeling.train
+
     deps:
       - caso_berka_model/modeling/train.py
       - caso_berka_model/modeling/predict.py
       - caso_berka_model/plots.py
       - caso_berka_model/mlflow_engine
       - data/processed/tabla_minable.csv
+
     params:
       - prepare.split_ratio
       - prepare.random_state
@@ -27,12 +32,11 @@ stages:
       - mlflow.enabled
     outs:
       - models/best_model.joblib
+
     metrics:
-      - metrics/eval.json:
+      - reports/metricas_modelos.csv:
           cache: false
+
     plots:
-      - metrics/plots.csv:
-          template: confusion
-          x: predicted
-          y: actual
+      - reports/tabla_deciles.csv:
           cache: false
