@@ -5,6 +5,11 @@
 !metrics/*.csv
 !metrics/*.json
 *.joblib
+
+# MLflow local tracking (SQLite + artefactos)
+mlflow.db
+mlruns/
+mlartifacts/
 # Mac OS-specific storage files
 .DS_Store
 

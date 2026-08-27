@@ -44,10 +44,29 @@ format:
 
 
 
-## Run tests
+## Run unit tests
+.PHONY: test-unit
+test-unit:
+	$(PYTHON_INTERPRETER) -m pytest tests/unit -m unit
+
+## Run integration tests
+.PHONY: test-integration
+test-integration:
+	$(PYTHON_INTERPRETER) -m pytest tests/integration -m integration
+
+## Run all tests (excluding slow e2e)
 .PHONY: test
 test:
-	python -m pytest tests
+	$(PYTHON_INTERPRETER) -m pytest tests -m "not slow"
+
+## Run all tests including slow e2e
+.PHONY: test-all
+test-all:
+	$(PYTHON_INTERPRETER) -m pytest tests
+
+## Lint and test (CI local)
+.PHONY: ci-local
+ci-local: lint test-unit test-integration
 
 
 ## Set up Python interpreter environment
@@ -88,6 +107,44 @@ dvc-pull:
 .PHONY: dvc-push
 dvc-push:
 	PATH="$(CURDIR)/.venv/bin:$(PATH)" dvc push
+
+## Train models and log the run to local MLflow (SQLite)
+.PHONY: mlflow-train
+mlflow-train:
+	$(PYTHON_INTERPRETER) -m caso_berka_model.mlflow_engine.run
+
+## Open the local MLflow UI (http://127.0.0.1:5000)
+.PHONY: mlflow-ui
+mlflow-ui:
+	$(PYTHON_INTERPRETER) -m mlflow ui --backend-store-uri sqlite:///$(CURDIR)/mlflow.db --host 127.0.0.1 --port 5000
+
+## Serve the Production model from the local Model Registry
+.PHONY: mlflow-serve
+mlflow-serve:
+	MLFLOW_TRACKING_URI=sqlite:///$(CURDIR)/mlflow.db $(PYTHON_INTERPRETER) -m mlflow models serve --model-uri models:/Berka_BuenCliente@Production --host 0.0.0.0 --port 8080 --env-manager local
+
+## Serve the custom FastAPI prediction API (Production PyFunc)
+.PHONY: api-serve
+api-serve:
+	MLFLOW_TRACKING_URI=sqlite:///$(CURDIR)/mlflow.db $(PYTHON_INTERPRETER) -m uvicorn caso_berka_model.api.main:app --host 0.0.0.0 --port 8000
+
+## Copy Production PyFunc artifacts to models/docker_production for the Docker image
+.PHONY: docker-prepare-model
+docker-prepare-model:
+	$(PYTHON_INTERPRETER) -m caso_berka_model.api.prepare_docker_model
+
+## Build the API Docker image (prepares Production model first)
+.PHONY: docker-build
+docker-build: docker-prepare-model
+	docker build -t caso-berka-api .
+
+## Run the API container on port 8000
+.PHONY: docker-run
+docker-run:
+	docker run --rm -p 8000:8000 \
+		--env-file models/docker_meta.env \
+		-e ENVIRONMENT=docker \
+		caso-berka-api
 
 
 #################################################################################
