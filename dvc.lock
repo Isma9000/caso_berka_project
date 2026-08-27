@@ -3,28 +3,6 @@ stages:
   preprocess:
     cmd: python -m caso_berka_model.dataset
     deps:
-<<<<<<< Updated upstream
-    - path: caso_berka_model/dataset.py
-      hash: md5
-      md5: a8e9b48710154f87a1932a2863ed755c
-      size: 2650
-    - path: caso_berka_model/features.py
-      hash: md5
-      md5: bd07f81e333c559d4fc21d01c548ad41
-      size: 8454
-    - path: data/raw
-      hash: md5
-      md5: b2a0c92d741f6515119a0dbee7657bfd.dir
-      size: 70125469
-      nfiles: 9
-    params:
-      params.yaml:
-        prepare.null_threshold: 0.6
-=======
-    - path: caso_berka_model/config.py
-      hash: md5
-      md5: 048a45599169c54a1f35f19d26c01d81
-      size: 537
     - path: caso_berka_model/dataset.py
       hash: md5
       md5: e5a1d534e0407845952fd025e8efb028
@@ -38,42 +16,41 @@ stages:
       md5: d517c274d6f69aa3af8107c166885180.dir
       size: 70755446
       nfiles: 9
->>>>>>> Stashed changes
+    params:
+      params.yaml:
+        prepare.null_threshold: 0.6
     outs:
     - path: data/processed/tabla_minable.csv
       hash: md5
-      md5: 691b4912a0d6894ee255bf8897045b6f
-      size: 1026483
+      md5: 3836d9361cd9858f429ed367fcedb601
+      size: 1031853
   train:
     cmd: python -m caso_berka_model.modeling.train
     deps:
+    - path: caso_berka_model/mlflow_engine
+      hash: md5
+      md5: fcff91749fe29bd68d75a66d38cf31a0.dir
+      size: 54017
+      nfiles: 18
     - path: caso_berka_model/modeling/predict.py
       hash: md5
-<<<<<<< Updated upstream
-      md5: dea8f45684cb9ebcc46906baf419feee
-      size: 2308
-    - path: caso_berka_model/modeling/train.py
-      hash: md5
-      md5: 99d725df6cae02609087c16c34b57281
-      size: 9848
-=======
       md5: 38041185b1e405edf34fcb37f6f137ae
       size: 2376
     - path: caso_berka_model/modeling/train.py
       hash: md5
-      md5: 2c2f6da48cafc628d9974252f3180765
-      size: 10590
->>>>>>> Stashed changes
+      md5: a28b4ab103e2cf3659f79537da267ac8
+      size: 11164
     - path: caso_berka_model/plots.py
       hash: md5
-      md5: 27c59d8602b1852ee1be8400647d5f67
-      size: 6961
+      md5: c8de2c7286b6226ce577c7e6f3892834
+      size: 7410
     - path: data/processed/tabla_minable.csv
       hash: md5
-      md5: 691b4912a0d6894ee255bf8897045b6f
-      size: 1026483
+      md5: 3836d9361cd9858f429ed367fcedb601
+      size: 1031853
     params:
       params.yaml:
+        mlflow.enabled: true
         prepare.random_state: 42
         prepare.split_ratio: 0.3
         train.max_depth:
@@ -82,26 +59,13 @@ stages:
     outs:
     - path: metrics/eval.json
       hash: md5
-      md5: f021f742144fd7d4ccc7d0d8ac76f2e4
-      size: 145
+      md5: b88d8388f8081ca109fbce469201624a
+      size: 150
     - path: metrics/plots.csv
       hash: md5
-      md5: 188ee578f3bf9804a646db7714deecca
-      size: 6461
+      md5: 296b66ae9bad174347d1cb41657aa323
+      size: 8073
     - path: models/best_model.joblib
       hash: md5
-<<<<<<< Updated upstream
-      md5: e701a98210eeaba95bde384e9c62ab2d
-      size: 6142361
-=======
       md5: 1c5cf6cc2ea54b72fce3ee76ecb0d9f1
       size: 6142329
-    - path: reports/metricas_modelos.csv
-      hash: md5
-      md5: f7b644d2ea43996ee1552466a5a7b106
-      size: 578
-    - path: reports/tabla_deciles.csv
-      hash: md5
-      md5: dce65228b55cde85b5df3fbbfc5379cc
-      size: 1178
->>>>>>> Stashed changes
