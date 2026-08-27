@@ -27,7 +27,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Requisito: Python 3.11 o superior.
+Requisito: Python 3.11.
 
 ### 2. Datos con DVC (remote local)
 
