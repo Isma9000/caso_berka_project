@@ -166,7 +166,10 @@ class ModelTrainer:
 
         best_k, _cv_scores = self.buscar_mejor_k(X, y)
         knn = make_pipeline(
-            KNeighborsClassifier(n_neighbors=best_k, weights="distance")
+            KNeighborsClassifier(
+                n_neighbors=best_k,
+                weights="distance",
+            )
         )
         knn.fit(X_train, y_train)
 
