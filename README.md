@@ -46,7 +46,7 @@ dvc pull
 
 El remote por defecto está en [`.dvc/config`](.dvc/config) como `local_remote` → `../dvc_storage_remote` (ruta relativa al root del repo).
 
-### 3. Pipeline completo (recomendado)
+### 3. Pipeline completo 
 
 Reproduce las etapas `preprocess` y `train` definidas en [`dvc.yaml`](dvc.yaml):
 

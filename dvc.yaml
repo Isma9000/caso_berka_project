@@ -24,12 +24,15 @@ stages:
       - data/processed/tabla_minable.csv
 
     params:
+
+=======
       - prepare.split_ratio
       - prepare.random_state
       - train.n_estimators
       - train.max_depth
       - train.target_col
       - mlflow.enabled
+>>>>>>> develop
     outs:
       - models/best_model.joblib
 
