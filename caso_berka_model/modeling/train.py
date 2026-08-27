@@ -2,6 +2,10 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from caso_berka_model.modeling.mlflow_tracking import (
+    registrar_modelo_mlflow,
+)
+
 from caso_berka_model.plots import (
     graficar_roc_mejor_modelo,
     graficar_roc_modelos,
@@ -482,6 +486,58 @@ def main():
         "Random Forest": rf
     }
 
+        # ----------------------------------
+    # REGISTRAR EXPERIMENTOS EN MLFLOW
+    # ----------------------------------
+
+    registrar_modelo_mlflow(
+        nombre="Regresion_Logistica",
+        modelo=rlb,
+        X_test=X_test,
+        y_test=y_test,
+        parametros={
+            "max_iter": 1000,
+            "class_weight": "balanced"
+        }
+    )
+
+    registrar_modelo_mlflow(
+        nombre="KNN",
+        modelo=knn,
+        X_test=X_test,
+        y_test=y_test,
+        parametros={
+            "n_neighbors": best_k,
+            "weights": "distance"
+        }
+    )
+
+    registrar_modelo_mlflow(
+        nombre="Arbol_Decision",
+        modelo=arbol,
+        X_test=X_test,
+        y_test=y_test,
+        parametros={
+            "criterion": "gini",
+            "max_depth": "None",
+            "class_weight": "balanced"
+        }
+    )
+
+    registrar_modelo_mlflow(
+        nombre="Random_Forest",
+        modelo=rf,
+        X_test=X_test,
+        y_test=y_test,
+        parametros={
+            "n_estimators": 400,
+            "max_depth": "None",
+            "min_samples_leaf": 3,
+            "class_weight":
+                "balanced_subsample"
+        }
+    )
+
     # 10. Evaluación
     resultados_df = evaluar_modelos(
         modelos,
@@ -532,6 +588,20 @@ def main():
     print(
         best_model_name
     )
+
+    # Registrar el mejor modelo
+    # también en Model Registry
+    registrar_modelo_mlflow(
+        nombre=f"BEST_{best_model_name}",
+        modelo=best_model,
+        X_test=X_test,
+        y_test=y_test,
+        parametros={
+            "selection_metric": "F1"
+        },
+        registrar_modelo=True
+    )
+
 
     # 12. Guardar modelo
     guardar_modelo(
