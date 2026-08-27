@@ -16,6 +16,8 @@ Realizado por el grupo:
 
 Repositorio: https://github.com/Isma9000/caso_berka_project
 
+Documentación técnica (MkDocs, 10 requisitos + guía de diapositivas): carpeta [`docs/`](docs/). Servir con `cd docs && mkdocs serve`. Informe narrativo: [`INFORME.md`](INFORME.md).
+
 ## Ejecución
 
 ### 1. Entorno virtual e instalación
