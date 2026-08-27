@@ -29,7 +29,7 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Requisito: Python 3.11 o superior.
+Requisito: Python 3.11.
 
 DVC se instala con `requirements.txt` dentro del `.venv`. Activa el entorno antes de usar `dvc` directamente, o usa los targets `make dvc-pull` / `make dvc-repro` (añaden `.venv/bin` al `PATH`).
 
