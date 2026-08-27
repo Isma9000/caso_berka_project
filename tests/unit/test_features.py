@@ -1,9 +1,12 @@
 import pandas as pd
+import pytest
 
 from caso_berka_model.dataset import DataProcessor
 from caso_berka_model.features import FeatureEngineer
 from caso_berka_model.modeling.predict import Predictor
 from caso_berka_model.modeling.train import Evaluator, ModelTrainer
+
+pytestmark = pytest.mark.unit
 
 
 def test_feature_engineer_objetivo():

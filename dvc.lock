@@ -27,14 +27,19 @@ stages:
   train:
     cmd: python -m caso_berka_model.modeling.train
     deps:
+    - path: caso_berka_model/mlflow_engine
+      hash: md5
+      md5: 4b881afafbb813cfa6c1585fba7807a4.dir
+      size: 59098
+      nfiles: 18
     - path: caso_berka_model/modeling/predict.py
       hash: md5
       md5: dea8f45684cb9ebcc46906baf419feee
       size: 2308
     - path: caso_berka_model/modeling/train.py
       hash: md5
-      md5: 99d725df6cae02609087c16c34b57281
-      size: 9848
+      md5: 4d810658f8edda3590934fb035061ab3
+      size: 10790
     - path: caso_berka_model/plots.py
       hash: md5
       md5: 27c59d8602b1852ee1be8400647d5f67
@@ -45,6 +50,7 @@ stages:
       size: 1026483
     params:
       params.yaml:
+        mlflow.enabled: true
         prepare.random_state: 42
         prepare.split_ratio: 0.3
         train.max_depth:

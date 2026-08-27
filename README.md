@@ -16,6 +16,8 @@ Realizado por el grupo:
 
 Repositorio: https://github.com/Isma9000/caso_berka_project
 
+Documentación técnica (MkDocs, 10 requisitos + guía de diapositivas): carpeta [`docs/`](docs/). Servir con `cd docs && mkdocs serve`. Informe narrativo: [`INFORME.md`](INFORME.md).
+
 ## Ejecución
 
 ### 1. Entorno virtual e instalación
@@ -29,16 +31,20 @@ pip install -r requirements.txt
 
 Requisito: Python 3.11 o superior.
 
+DVC se instala con `requirements.txt` dentro del `.venv`. Activa el entorno antes de usar `dvc` directamente, o usa los targets `make dvc-pull` / `make dvc-repro` (añaden `.venv/bin` al `PATH`).
+
 ### 2. Datos con DVC (remote local)
 
-Los archivos pesados no van en Git; se versionan con DVC en un directorio **fuera del repo**:
+Los archivos pesados no van en Git; se versionan con DVC en un directorio **fuera del repo** (un nivel arriba del root del proyecto):
 
 ```bash
 mkdir -p ../dvc_storage_remote
 dvc pull
 ```
 
-El remote por defecto está en [`.dvc/config`](.dvc/config) como `local_remote` → `../dvc_storage_remote`.
+`dvc pull` **descarga artefactos** ya versionados (datos crudos, CSV procesado, modelo). No ejecuta Python ni reentrena.
+
+El remote por defecto está en [`.dvc/config`](.dvc/config) como `local_remote` → `../dvc_storage_remote` (ruta relativa al root del repo).
 
 ### 3. Pipeline completo (recomendado)
 
@@ -50,7 +56,7 @@ dvc repro
 make dvc-repro
 ```
 
-Salida esperada cuando todo está al día:
+`dvc repro` **ejecuta el pipeline** si cambió código, `params.yaml` o dependencias, y actualiza `dvc.lock`. Si todo está al día, hace skip de cada stage.
 
 ```text
 'data/raw.dvc' didn't change, skipping
@@ -59,7 +65,9 @@ Stage 'train' didn't change, skipping
 Data and pipelines are up to date.
 ```
 
-### 4. Ejecución por etapas
+### 4. Ejecución por etapas (debug)
+
+Los comandos siguientes corren el mismo código que los stages DVC, pero **no actualizan** `dvc.lock` ni el grafo de DVC. Úsalos para depurar; para reproducibilidad compartida, prefiere `dvc repro`.
 
 ```bash
 # Solo preparación de datos → data/processed/tabla_minable.csv
@@ -78,11 +86,33 @@ python -m caso_berka_model.modeling.train
 
 ### 5. Tests
 
+Hay dos formas de validar el proyecto:
+
+**Desarrollo rápido** (no requiere DVC ni datos pesados; ~30 s):
+
 ```bash
-make test
-# o
-pytest tests
+make lint
+make test-unit          # solo tests/unit
+make test-integration   # tests/integration (SQLite temporal, CSV sintético)
+make ci-local           # lint + unit + integration
 ```
+
+**Validación completa** (reproducibilidad + tests):
+
+```bash
+dvc pull && dvc repro && make test
+```
+
+Targets disponibles:
+
+| Comando | Alcance |
+|---------|---------|
+| `make test-unit` | Tests unitarios (`@pytest.mark.unit`) |
+| `make test-integration` | Tests de integración aislados |
+| `make test` | Toda la suite excepto tests `slow` (e2e Docker) |
+| `make test-all` | Incluye e2e si Docker e imagen están listos |
+
+Los tests usan datos sintéticos y directorios temporales; no dependen del remote DVC. Para validar localmente antes de integrar: `make ci-local`.
 
 ### 6. Publicar artefactos en el remote DVC
 
@@ -109,7 +139,8 @@ Hiperparámetros en [`params.yaml`](params.yaml). Tras editarlos, vuelve a corre
 El entrenamiento registra experimentos en **SQLite local** (`mlflow.db`) y artefactos en `mlruns/`. No hace falta un servidor remoto. En Python 3.14 se instala MLflow 3.x (MLflow 2.x exige `pyarrow<20`, sin wheel para 3.14); el registry escribe tanto el *stage* `Production` como el alias `@Production`.
 
 ```bash
-# Entrenar, loguear métricas/artefactos y promover el PyFunc a Production
+# Solo si aún no corriste dvc repro con mlflow.enabled: true
+# (dvc repro ya entrena y promueve a Production si MLflow está activo)
 make mlflow-train
 # equivalente:
 python -m caso_berka_model.mlflow_engine.run
@@ -159,7 +190,7 @@ Configuración en [`params.yaml`](params.yaml) (`mlflow.*`): experimento `Berka_
 
 La imagen sirve la misma API en el puerto **8000**. En Docker el modelo se carga desde una ruta fija (`models/docker_production`) porque el Registry local guarda rutas absolutas del host que no existen dentro del contenedor.
 
-**Requisitos:** Docker instalado y un modelo ya promovido a Production (`make mlflow-train` si aún no existe `mlflow.db` / `mlruns/`).
+**Requisitos:** Docker instalado y un modelo ya promovido a Production (normalmente tras `dvc repro` con `mlflow.enabled: true`).
 
 ```bash
 # Copia el PyFunc Production a models/docker_production y construye la imagen
@@ -256,9 +287,9 @@ Comandos de salud del proyecto:
 
 ```bash
 dvc status          # Data and pipelines are up to date.
-pytest tests        # tests de datos + tracking MLflow
+make test           # suite completa (sin e2e slow)
 dvc metrics show    # accuracy ~0.98, f1_score ~0.97
-ls mlflow.db        # backend SQLite local tras make mlflow-train
+ls mlflow.db        # backend SQLite local tras dvc repro o make mlflow-train
 ```
 
 ---
