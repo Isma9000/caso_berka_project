@@ -44,10 +44,29 @@ format:
 
 
 
-## Run tests
+## Run unit tests
+.PHONY: test-unit
+test-unit:
+	$(PYTHON_INTERPRETER) -m pytest tests/unit -m unit
+
+## Run integration tests
+.PHONY: test-integration
+test-integration:
+	$(PYTHON_INTERPRETER) -m pytest tests/integration -m integration
+
+## Run all tests (excluding slow e2e)
 .PHONY: test
 test:
-	python -m pytest tests
+	$(PYTHON_INTERPRETER) -m pytest tests -m "not slow"
+
+## Run all tests including slow e2e
+.PHONY: test-all
+test-all:
+	$(PYTHON_INTERPRETER) -m pytest tests
+
+## Lint and test (CI local)
+.PHONY: ci-local
+ci-local: lint test-unit test-integration
 
 
 ## Set up Python interpreter environment

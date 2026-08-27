@@ -1,5 +1,6 @@
 loguru
 mkdocs
+mkdocs-material
 pip
 pytest
 python-dotenv
