@@ -75,16 +75,6 @@ Usa `TestClient` y `MockPyFuncModel` (sin `mlflow.db` real).
 !!! note "Aislamiento"
     Los tests de integración usan `tmp_path` y datos sintéticos. **No** dependen del remote DVC ni del `mlflow.db` del desarrollador.
 
-## CI (GitHub Actions)
-
-Workflow [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml):
-
-1. `ruff check` + `ruff format --check`
-2. `make test-unit`
-3. `make test-integration`
-
-Matrix Python 3.11 y 3.12. Sin `dvc pull` en CI.
-
 ## Criterio de calidad pre-merge
 
 ```bash

@@ -112,7 +112,7 @@ Targets disponibles:
 | `make test` | Toda la suite excepto tests `slow` (e2e Docker) |
 | `make test-all` | Incluye e2e si Docker e imagen están listos |
 
-Los tests usan datos sintéticos y directorios temporales; no dependen del remote DVC. El CI en GitHub Actions ejecuta `make ci-local` en cada PR.
+Los tests usan datos sintéticos y directorios temporales; no dependen del remote DVC. Para validar localmente antes de integrar: `make ci-local`.
 
 ### 6. Publicar artefactos en el remote DVC
 

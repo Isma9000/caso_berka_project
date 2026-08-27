@@ -84,8 +84,6 @@ dvc params diff
 make api-serve          # o docker-run → GET /health
 ```
 
-El workflow [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) ejecuta lint y tests en cada PR (Python 3.11 y 3.12).
-
 ## Siguiente lectura
 
 - [Guía de diapositivas 10–11](slides.md#diapositivas-10-11)
