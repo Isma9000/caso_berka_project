@@ -24,22 +24,6 @@ stages:
       - data/processed/tabla_minable.csv
 
     params:
-<<<<<<< HEAD
-      - split.test_size
-      - split.random_state
-      - logistic_regression.max_iter
-      - logistic_regression.class_weight
-      - knn.k_min
-      - knn.k_max
-      - knn.weights
-      - decision_tree.criterion
-      - decision_tree.max_depth
-      - decision_tree.class_weight
-      - random_forest.n_estimators
-      - random_forest.max_depth
-      - random_forest.min_samples_leaf
-      - random_forest.class_weight
-      - selection.metric
 
 =======
       - prepare.split_ratio

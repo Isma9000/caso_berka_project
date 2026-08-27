@@ -23,11 +23,7 @@ random_forest:
   n_estimators: 400
   max_depth: null
   min_samples_leaf: 3
-<<<<<<< HEAD
-  class_weight: balanced_subsample
 
-selection:
-  metric: F1
 =======
   max_iter: 1000
   knn_k_max: 20
