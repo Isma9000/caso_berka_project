@@ -13,14 +13,29 @@ pip install -r requirements.txt
 
 Requisito: **Python 3.11+**.
 
-## 2. Datos (DVC)
+DVC queda en el `.venv` tras `pip install`. Activa el entorno (`source .venv/bin/activate`) o usa `make dvc-pull` / `make dvc-repro`.
+
+## 2. Tests rápidos (desarrollo)
+
+No requieren DVC ni datos pesados:
 
 ```bash
-mkdir -p ../dvc_storage_remote   # o la ruta del remote en .dvc/config
+make ci-local
+# o por capas:
+make test-unit
+make test-integration
+```
+
+## 3. Datos (DVC)
+
+```bash
+mkdir -p ../dvc_storage_remote
 dvc pull
 ```
 
-## 3. Pipeline
+`dvc pull` descarga artefactos del remote `../dvc_storage_remote` (definido en `.dvc/config`). No ejecuta el pipeline.
+
+## 4. Pipeline
 
 ```bash
 dvc repro
@@ -28,15 +43,27 @@ dvc repro
 make dvc-repro
 ```
 
-## 4. Tests, MLflow y API
+`dvc repro` corre `preprocess` → `train` si algo cambió y regenera `dvc.lock`. Con `mlflow.enabled: true` también escribe `mlflow.db` y promueve el modelo a Production.
+
+## 5. Validación completa
 
 ```bash
 make test
+dvc push    # si cambiaste artefactos y quieres publicarlos
+```
+
+## 6. Tests, MLflow y API
+
+```bash
 make mlflow-ui          # http://127.0.0.1:5000
 make api-serve          # http://127.0.0.1:8000/docs
 ```
 
-## 5. Docker
+`make mlflow-train` solo hace falta si entrenaste sin MLflow o quieres re-loguear sin `dvc repro`.
+
+## 7. Docker
+
+Requisito previo: modelo en Production (normalmente tras `dvc repro`).
 
 ```bash
 make docker-build

@@ -3,7 +3,6 @@ stages:
   preprocess:
     cmd: python -m caso_berka_model.dataset
     deps:
-<<<<<<< Updated upstream
     - path: caso_berka_model/dataset.py
       hash: md5
       md5: a8e9b48710154f87a1932a2863ed755c
@@ -20,25 +19,6 @@ stages:
     params:
       params.yaml:
         prepare.null_threshold: 0.6
-=======
-    - path: caso_berka_model/config.py
-      hash: md5
-      md5: 048a45599169c54a1f35f19d26c01d81
-      size: 537
-    - path: caso_berka_model/dataset.py
-      hash: md5
-      md5: e5a1d534e0407845952fd025e8efb028
-      size: 2733
-    - path: caso_berka_model/features.py
-      hash: md5
-      md5: dd3bb7bac88f26190ca63fe418267096
-      size: 8695
-    - path: data/raw
-      hash: md5
-      md5: d517c274d6f69aa3af8107c166885180.dir
-      size: 70755446
-      nfiles: 9
->>>>>>> Stashed changes
     outs:
     - path: data/processed/tabla_minable.csv
       hash: md5
@@ -47,23 +27,19 @@ stages:
   train:
     cmd: python -m caso_berka_model.modeling.train
     deps:
+    - path: caso_berka_model/mlflow_engine
+      hash: md5
+      md5: 4b881afafbb813cfa6c1585fba7807a4.dir
+      size: 59098
+      nfiles: 18
     - path: caso_berka_model/modeling/predict.py
       hash: md5
-<<<<<<< Updated upstream
       md5: dea8f45684cb9ebcc46906baf419feee
       size: 2308
     - path: caso_berka_model/modeling/train.py
       hash: md5
-      md5: 99d725df6cae02609087c16c34b57281
-      size: 9848
-=======
-      md5: 38041185b1e405edf34fcb37f6f137ae
-      size: 2376
-    - path: caso_berka_model/modeling/train.py
-      hash: md5
-      md5: 2c2f6da48cafc628d9974252f3180765
-      size: 10590
->>>>>>> Stashed changes
+      md5: 4d810658f8edda3590934fb035061ab3
+      size: 10790
     - path: caso_berka_model/plots.py
       hash: md5
       md5: 27c59d8602b1852ee1be8400647d5f67
@@ -74,6 +50,7 @@ stages:
       size: 1026483
     params:
       params.yaml:
+        mlflow.enabled: true
         prepare.random_state: 42
         prepare.split_ratio: 0.3
         train.max_depth:
@@ -90,18 +67,5 @@ stages:
       size: 6461
     - path: models/best_model.joblib
       hash: md5
-<<<<<<< Updated upstream
       md5: e701a98210eeaba95bde384e9c62ab2d
       size: 6142361
-=======
-      md5: 1c5cf6cc2ea54b72fce3ee76ecb0d9f1
-      size: 6142329
-    - path: reports/metricas_modelos.csv
-      hash: md5
-      md5: f7b644d2ea43996ee1552466a5a7b106
-      size: 578
-    - path: reports/tabla_deciles.csv
-      hash: md5
-      md5: dce65228b55cde85b5df3fbbfc5379cc
-      size: 1178
->>>>>>> Stashed changes

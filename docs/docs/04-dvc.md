@@ -43,7 +43,7 @@ flowchart LR
 Configuración en `.dvc/config`:
 
 - Remote por defecto: `local_remote`
-- URL típica: directorio **fuera del repo** (p. ej. `../dvc_storage_remote` o la ruta relativa definida en el config del clon)
+- URL: `../dvc_storage_remote` (directorio **un nivel arriba** del root del repo)
 
 ```bash
 mkdir -p ../dvc_storage_remote
@@ -51,16 +51,22 @@ dvc pull
 dvc push
 ```
 
+`dvc pull` recupera artefactos del remote; `dvc push` publica los outs locales tras un `dvc repro` exitoso.
+
+## `dvc.lock`
+
+`dvc.lock` es YAML **generado** por DVC al reproducir el pipeline. Debe versionarse en Git, pero **nunca** debe contener marcadores de merge (`<<<<<<<`, `=======`, `>>>>>>>`). Si el archivo queda corrupto, restáuralo desde una versión limpia y ejecuta `dvc repro` para regenerar los hashes.
+
 ## Comandos habituales
 
-| Acción | Comando |
-|--------|---------|
-| Reproducir pipeline | `dvc repro` / `make dvc-repro` |
-| Recuperar artefactos | `dvc pull` / `make dvc-pull` |
-| Publicar al remote | `dvc push` / `make dvc-push` |
-| Ver métricas | `dvc metrics show` |
-| Diff de métricas/params | `dvc metrics diff`, `dvc params diff` |
-| Estado | `dvc status` |
+| Acción | Comando | Qué hace |
+|--------|---------|----------|
+| Recuperar artefactos | `dvc pull` / `make dvc-pull` | Descarga datos/modelos del remote; no ejecuta Python |
+| Reproducir pipeline | `dvc repro` / `make dvc-repro` | Corre stages si cambió algo; actualiza `dvc.lock` |
+| Publicar al remote | `dvc push` / `make dvc-push` | Sube outs al remote para el equipo |
+| Ver métricas | `dvc metrics show` | Muestra métricas versionadas |
+| Diff de métricas/params | `dvc metrics diff`, `dvc params diff` | Compara entre commits |
+| Estado | `dvc status` | Indica qué outs están desactualizados |
 
 ## Git vs DVC
 

@@ -3,61 +3,94 @@
 ## Cómo ejecutar
 
 ```bash
-make test
-# o
-pytest tests
+make test-unit          # rápido: solo unit/
+make test-integration   # integración aislada
+make test               # todo excepto slow (e2e Docker)
+make ci-local           # lint + unit + integration (pre-merge)
 ```
 
-Dependencias: `pytest`, `httpx` (cliente ASGI de FastAPI), `scikit-learn`, `mlflow`.
+Equivalente directo:
 
-## Organización por contrato
+```bash
+pytest tests/unit -m unit
+pytest tests/integration -m integration
+pytest tests -m "not slow"
+```
 
-| Archivo | Alcance | Tipo |
-|---------|---------|------|
-| `tests/test_data.py` | Objetivo `buen_cliente` y existencia de clases del pipeline | Unitario |
-| `tests/test_api.py` | Endpoints FastAPI con modelo mock | Unitario / contrato API |
-| `tests/test_mlflow.py` | Linaje, PyFunc, tracking SQLite temporal, registry | Unitario + integración aislada |
+Dependencias: `pytest`, `httpx`, `scikit-learn`, `mlflow`. Configuración en [`pyproject.toml`](../pyproject.toml) (`markers`, `testpaths`).
 
-## Detalle de pruebas
+## Organización por capas
 
-### Datos (`test_data.py`)
+```
+tests/
+  conftest.py           # fixtures compartidas
+  unit/                 # @pytest.mark.unit
+  integration/          # @pytest.mark.integration
+  e2e/                  # @pytest.mark.slow (Docker)
+```
 
-- `test_feature_engineer_objetivo`: DataFrame sintético → columna `buen_cliente` ∈ {0, 1}.
-- `test_clases_pipeline_existen`: importa `DataProcessor`, `FeatureEngineer`, `ModelTrainer`, `Evaluator`, `Predictor`.
+| Capa | Archivos | Tipo | Qué valida |
+|------|----------|------|------------|
+| `unit/` | `test_features.py`, `test_train.py`, `test_evaluator.py`, `test_predictor.py`, `test_schemas.py`, `test_api.py`, `test_mlflow_pyfunc.py` | Unitario | Lógica aislada, contrato API con mock, PyFunc y linaje |
+| `integration/` | `test_train_pipeline.py`, `test_mlflow_registry.py`, `test_dvc_contract.py` | Integración aislada | Entrenamiento en `tmp_path`, registry MLflow temporal, contrato DVC |
+| `e2e/` | `test_docker_health.py` | E2E lento | Health del contenedor (skip si no hay Docker/imagen) |
 
-### API (`test_api.py`)
+## Detalle de pruebas clave
 
-Usa `TestClient` y un `_MockPyFuncModel` que imita el contrato Production (`probability`, `prediction`, `high_confidence_flag`).
+### Datos y entrenamiento (`unit/`)
+
+- `test_feature_engineer_objetivo`: columna `buen_cliente` ∈ {0, 1}
+- `test_prepare_data_uses_prepare_split_ratio`: regresión del esquema `prepare.split_ratio` (no `split`)
+- `test_save_dvc_metrics_writes_eval_json`: `eval.json` y `plots.csv` en directorio temporal
+- `test_decile_table_returns_ten_deciles`: tabla de deciles con 10 filas
+
+### API (`unit/test_api.py`)
+
+Usa `TestClient` y `MockPyFuncModel` (sin `mlflow.db` real).
 
 | Test | Expectativa |
 |------|-------------|
-| `GET /` | 200, status Online, versión y `run_id` |
+| `GET /` | 200, status Online |
 | `GET /health` con modelo | 200, `healthy` |
 | `GET /health` sin modelo | **503** |
-| `POST /predict` con modelo | 200, diagnóstico, probabilidad, metadata |
+| `POST /predict` con modelo | 200, diagnóstico y metadata |
 | `POST /predict` sin modelo | **500** |
-| Payload | Las **8** features de `FEATURE_COLUMNS` |
+| `POST /predict` payload incompleto | **422** |
 
-### MLflow (`test_mlflow.py`)
+### MLflow (`unit/` + `integration/`)
 
-| Test | Expectativa |
-|------|-------------|
-| `test_lineage_metadata` | Tags `git_commit` y `dvc_status` presentes |
-| `test_pyfunc_wrapper_predict` | Columnas del wrapper de decisión |
-| `test_mlflow_logs_metrics_and_registry` | DB SQLite temporal, métricas en runs, promoción Production, `predict` |
+| Test | Capa | Expectativa |
+|------|------|-------------|
+| `test_lineage_metadata` | unit | Tags `git_commit`, `dvc_status` |
+| `test_pyfunc_wrapper_predict` | unit | Columnas del wrapper |
+| `test_pyfunc_wrapper_uses_custom_threshold` | unit | Umbral de decisión personalizado |
+| `test_mlflow_logs_metrics_and_registry` | integration | SQLite temporal, métricas, Production, `predict` |
+
+### DVC (`integration/test_dvc_contract.py`)
+
+- `dvc.lock` sin marcadores de merge
+- `dvc.yaml`, `params.yaml`, `dvc.lock` parseables como YAML
+- `dvc status` (marcado `slow`, opcional en local)
 
 !!! note "Aislamiento"
-    Los tests de MLflow usan `tmp_path` y **no** dependen del `mlflow.db` real del desarrollador.
+    Los tests de integración usan `tmp_path` y datos sintéticos. **No** dependen del remote DVC ni del `mlflow.db` del desarrollador.
+
+## CI (GitHub Actions)
+
+Workflow [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml):
+
+1. `ruff check` + `ruff format --check`
+2. `make test-unit`
+3. `make test-integration`
+
+Matrix Python 3.11 y 3.12. Sin `dvc pull` en CI.
 
 ## Criterio de calidad pre-merge
 
-Antes de integrar cambios se recomienda:
-
 ```bash
-pytest tests
-ruff check
-dvc repro          # si cambian datos/código del pipeline
-curl .../health    # si cambia serving
+make ci-local         # desarrollo diario
+dvc repro             # si cambian datos/código del pipeline
+curl .../health       # si cambia serving o Docker
 ```
 
 ## Siguiente lectura

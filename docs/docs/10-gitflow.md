@@ -75,15 +75,16 @@ Ajustar la matriz en la presentación si el equipo documentó otra división rea
 ## Checklist antes de integrar
 
 ```bash
-pytest tests
-ruff check
-dvc repro
+make ci-local           # ruff + test-unit + test-integration
+dvc repro               # si cambian datos/código del pipeline
 dvc metrics show
 dvc metrics diff HEAD
 dvc params diff
 # Si afecta serving:
-make api-serve   # o docker-run → GET /health
+make api-serve          # o docker-run → GET /health
 ```
+
+El workflow [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) ejecuta lint y tests en cada PR (Python 3.11 y 3.12).
 
 ## Siguiente lectura
 
