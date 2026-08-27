@@ -8,7 +8,7 @@ Modelo predictivo supervisado que permita clasificar clientes buenos y malos par
 
 Realizado por el grupo:
 
- - Ayala Torrico Adriana Nicole ,
+ -  Ayala Torrico Adriana Nicole ,
  -  Poma Limache Alisson Daniela,
  -  Fuentes Rios Beatriz,
  -  Peralta Fernández Ismael,
@@ -202,7 +202,6 @@ make docker-run
 # Alternativa con Compose (tras make docker-prepare-model o make docker-build)
 docker compose up --build
 ```
-
 Comprobación:
 
 ```bash
