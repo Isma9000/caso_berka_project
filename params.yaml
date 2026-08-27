@@ -23,7 +23,19 @@ random_forest:
   n_estimators: 400
   max_depth: null
   min_samples_leaf: 3
-  class_weight: balanced_subsample
 
-selection:
-  metric: F1
+=======
+  max_iter: 1000
+  knn_k_max: 20
+  target_col: "buen_cliente"
+  selection_metric: F1
+
+mlflow:
+  enabled: true
+  tracking_uri: sqlite:///mlflow.db
+  experiment_name: Berka_Credit_Classification
+  registered_model_name: Berka_BuenCliente
+  decision_threshold: 0.65
+  promote_to_production: true
+  run_evaluate: true
+>>>>>>> develop

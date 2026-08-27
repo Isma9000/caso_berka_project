@@ -4,9 +4,8 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
-from sklearn.metrics import RocCurveDisplay
 from sklearn.inspection import permutation_importance
+from sklearn.metrics import RocCurveDisplay
 
 from caso_berka_model.config import FIGURES_DIR
 

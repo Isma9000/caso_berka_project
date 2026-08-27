@@ -1,5 +1,6 @@
 loguru
 mkdocs
+mkdocs-material
 pip
 pytest
 python-dotenv
@@ -12,9 +13,11 @@ pandas
 numpy
 scikit-learn
 matplotlib
+seaborn
 joblib
-
+pyyaml
+dvc
+mlflow>=2.17
 fastapi
-uvicorn
-pydantic
-mlflow
+uvicorn[standard]
+httpx

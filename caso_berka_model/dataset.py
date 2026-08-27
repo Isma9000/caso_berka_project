@@ -1,208 +1,81 @@
+from pathlib import Path
+
 import pandas as pd
+import yaml
 
 from caso_berka_model.config import (
+    PARAMS_PATH,
     RAW_DATA_DIR,
-    PROCESSED_DATA_DIR
+    TABLA_MINABLE,
 )
-
-from caso_berka_model.features import (
-    crear_base_clientes,
-    crear_variables_transacciones,
-    crear_variables_ingresos,
-    crear_variables_egresos,
-    crear_variables_prestamos,
-    crear_variables_tarjetas,
-    unir_variables,
-    limpiar_ids,
-    reemplazar_nulos_iniciales,
-    crear_variable_objetivo,
-    eliminar_duplicados,
-    eliminar_columnas_con_muchos_nulos,
-    imputar_datos_faltantes,
-    aplicar_one_hot_encoding,
-    detectar_outliers,
-    escalar_variables,
-)
+from caso_berka_model.features import FeatureEngineer
 
 
-def cargar_datos():
-    """
-    Carga los archivos originales del caso Banco Berka.
-    """
+class DataProcessor:
+    """Ingesta y preprocesamiento de datos Berka."""
 
-    client = pd.read_csv(
-        RAW_DATA_DIR / "client.asc",
-        sep=";"
-    )
+    RAW_TABLES = ("client", "disp", "card", "account", "loan", "trans")
 
-    disp = pd.read_csv(
-        RAW_DATA_DIR / "disp.asc",
-        sep=";"
-    )
+    def __init__(
+        self,
+        input_path: str | Path | None = None,
+        output_path: str | Path | None = None,
+        params_path: str | Path | None = None,
+    ):
+        self.raw_dir = Path(input_path) if input_path else RAW_DATA_DIR
+        self.output_path = Path(output_path) if output_path else TABLA_MINABLE
+        self.params_path = Path(params_path) if params_path else PARAMS_PATH
+        self.engineer = FeatureEngineer()
 
-    card = pd.read_csv(
-        RAW_DATA_DIR / "card.asc",
-        sep=";"
-    )
+    def _load_params(self) -> dict:
+        if not self.params_path.exists():
+            return {"prepare": {"null_threshold": 0.60}}
+        with open(self.params_path, encoding="utf-8") as handle:
+            return yaml.safe_load(handle) or {}
 
-    account = pd.read_csv(
-        RAW_DATA_DIR / "account.asc",
-        sep=";"
-    )
-
-    loan = pd.read_csv(
-        RAW_DATA_DIR / "loan.asc",
-        sep=";"
-    )
-
-    trans = pd.read_csv(
-        RAW_DATA_DIR / "trans.asc",
-        sep=";",
-        low_memory=False
-    )
-
-    return {
-        "client": client,
-        "disp": disp,
-        "card": card,
-        "account": account,
-        "loan": loan,
-        "trans": trans,
-    }
-
-
-def construir_dataset():
-    """
-    Ejecuta todo el procesamiento del Notebook Parte 1.
-    """
-
-    datos = cargar_datos()
-
-    # 1. Crear base principal
-    base = crear_base_clientes(
-        datos["client"],
-        datos["disp"],
-        datos["account"]
-    )
-
-    # 2. Crear variables de transacciones
-    trans_resumen = crear_variables_transacciones(
-        datos["trans"]
-    )
-
-    ingresos = crear_variables_ingresos(
-        datos["trans"]
-    )
-
-    egresos = crear_variables_egresos(
-        datos["trans"]
-    )
-
-    # 3. Crear variables de préstamos
-    loan_resumen = crear_variables_prestamos(
-        datos["loan"]
-    )
-
-    # 4. Crear variables de tarjetas
-    card_resumen = crear_variables_tarjetas(
-        datos["card"]
-    )
-
-    # 5. Unir todas las variables
-    base = unir_variables(
-        base,
-        trans_resumen,
-        ingresos,
-        egresos,
-        loan_resumen,
-        card_resumen
-    )
-
-    # 6. Limpiar IDs innecesarios
-    base = limpiar_ids(base)
-
-    # 7. Reemplazar nulos iniciales
-    base = reemplazar_nulos_iniciales(base)
-
-    # 8. Crear variable objetivo
-    base = crear_variable_objetivo(base)
-
-    # 9. Eliminar duplicados
-    tabla_minable = eliminar_duplicados(base)
-
-    # 10. Eliminar columnas con demasiados nulos
-    tabla_minable = (
-        eliminar_columnas_con_muchos_nulos(
-            tabla_minable
+    def _resolve_raw_file(self, filename: str) -> Path:
+        candidates = [
+            self.raw_dir / filename,
+            self.raw_dir / "data" / filename,
+        ]
+        for path in candidates:
+            if path.exists():
+                return path
+        matches = list(self.raw_dir.rglob(filename))
+        if matches:
+            return matches[0]
+        raise FileNotFoundError(
+            f"No se encontró {filename} bajo {self.raw_dir}"
         )
-    )
 
-    # 11. Imputar datos faltantes
-    tabla_minable = imputar_datos_faltantes(
-        tabla_minable
-    )
+    def load_data(self) -> dict[str, pd.DataFrame]:
+        if not self.raw_dir.exists():
+            raise FileNotFoundError(f"El directorio {self.raw_dir} no existe.")
 
-    # 12. One-hot encoding
-    tabla_modelo = aplicar_one_hot_encoding(
-        tabla_minable
-    )
+        tables = {}
+        for name in self.RAW_TABLES:
+            path = self._resolve_raw_file(f"{name}.asc")
+            tables[name] = pd.read_csv(path, sep=";", low_memory=False)
+        return tables
 
-    # 13. Detectar outliers
-    resumen_outliers = detectar_outliers(
-        tabla_modelo
-    )
+    def clean_data(self, datos: dict[str, pd.DataFrame]) -> pd.DataFrame:
+        params = self._load_params()
+        null_threshold = params.get("prepare", {}).get("null_threshold", 0.60)
+        return self.engineer.clean_data(datos, null_threshold=null_threshold)
 
-    print("Outliers detectados:")
-    print(resumen_outliers)
+    def save_data(self, df: pd.DataFrame) -> None:
+        self.output_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(self.output_path, index=False)
+        print(f"[DataProcessor] Datos guardados en: {self.output_path}")
 
-    # 14. Escalar variables
-    tabla_modelo, scaler = escalar_variables(
-        tabla_modelo
-    )
-
-    return tabla_modelo, scaler
-
-
-def guardar_dataset(tabla_modelo):
-    """
-    Guarda la tabla final procesada.
-    """
-
-    PROCESSED_DATA_DIR.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    ruta_salida = (
-        PROCESSED_DATA_DIR
-        / "tabla_minable.csv"
-    )
-
-    tabla_modelo.to_csv(
-        ruta_salida,
-        index=False
-    )
-
-    print(
-        f"Dataset guardado en: "
-        f"{ruta_salida}"
-    )
+    def run(self) -> None:
+        datos = self.load_data()
+        tabla = self.clean_data(datos)
+        self.save_data(tabla)
 
 
 def main():
-    """
-    Ejecuta todo el pipeline de preparación.
-    """
-
-    tabla_modelo, scaler = construir_dataset()
-
-    guardar_dataset(
-        tabla_modelo
-    )
-
-    print(
-        "Preparación de datos completada."
-    )
+    DataProcessor().run()
 
 
 if __name__ == "__main__":
