@@ -13,6 +13,11 @@ mlartifacts/
 # Mac OS-specific storage files
 .DS_Store
 
+# MLflow
+mlruns/
+mlflow.db
+*.db
+
 # vim
 *.swp
 *.swo
