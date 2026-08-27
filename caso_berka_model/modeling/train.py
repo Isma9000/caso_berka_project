@@ -109,7 +109,7 @@ class ModelTrainer:
         return pd.read_csv(self.data_path)
 
     def separar_variables(self, df):
-        target_col = self.params["train"]["target_col"]
+        target_col = "buen_cliente"
         y = df[target_col]
         columnas_eliminar = [
             target_col,
@@ -132,18 +132,20 @@ class ModelTrainer:
     def prepare_data(self):
         df = self.cargar_dataset()
         X, y = self.separar_variables(df)
-        prepare = self.params["prepare"]
+        split = self.params["split"]
         return train_test_split(
             X,
             y,
-            test_size=prepare["split_ratio"],
-            random_state=prepare["random_state"],
+            test_size=split["test_size"],
+            random_state=split["random_state"],
             stratify=y,
         )
 
     def buscar_mejor_k(self, X, y):
-        k_max = int(self.params["train"].get("knn_k_max", 20))
-        k_range = range(1, k_max + 1)
+        knn_params = self.params["knn"]
+        k_min = int(knn_params.get("k_min", 1))
+        k_max = int(knn_params.get("k_max", 20))
+        k_range = range(k_min, k_max + 1)
         cv_scores = []
         for k in k_range:
             knn = KNeighborsClassifier(n_neighbors=k)
@@ -153,37 +155,44 @@ class ModelTrainer:
         return best_k, cv_scores
 
     def _entrenar_modelos(self, X_train, y_train, X, y):
-        train = self.params["train"]
-        random_state = self.params["prepare"]["random_state"]
+        lr_params = self.params["logistic_regression"]
+        knn_params = self.params["knn"]
+        dt_params = self.params["decision_tree"]
+        rf_params = self.params["random_forest"]
+        split = self.params["split"]
+        random_state = split["random_state"]
 
         rlb = make_pipeline(
             LogisticRegression(
-                max_iter=int(train.get("max_iter", 1000)),
-                class_weight="balanced",
+                max_iter=int(lr_params.get("max_iter", 1000)),
+                class_weight=lr_params.get("class_weight", "balanced"),
             )
         )
         rlb.fit(X_train, y_train)
 
         best_k, _cv_scores = self.buscar_mejor_k(X, y)
         knn = make_pipeline(
-            KNeighborsClassifier(n_neighbors=best_k, weights="distance")
+            KNeighborsClassifier(
+                n_neighbors=best_k,
+                weights=knn_params.get("weights", "distance"),
+            )
         )
         knn.fit(X_train, y_train)
 
-        max_depth = train.get("max_depth")
+        max_depth = dt_params.get("max_depth")
         arbol = DecisionTreeClassifier(
-            criterion="gini",
+            criterion=dt_params.get("criterion", "gini"),
             random_state=random_state,
             max_depth=max_depth,
-            class_weight="balanced",
+            class_weight=dt_params.get("class_weight", "balanced"),
         )
         arbol.fit(X_train, y_train)
 
         rf = RandomForestClassifier(
-            n_estimators=int(train["n_estimators"]),
-            max_depth=max_depth,
-            min_samples_leaf=int(train.get("min_samples_leaf", 3)),
-            class_weight="balanced_subsample",
+            n_estimators=int(rf_params["n_estimators"]),
+            max_depth=rf_params.get("max_depth"),
+            min_samples_leaf=int(rf_params.get("min_samples_leaf", 3)),
+            class_weight=rf_params.get("class_weight", "balanced_subsample"),
             random_state=random_state,
             n_jobs=-1,
         )
@@ -242,7 +251,7 @@ class ModelTrainer:
             ]
         )
 
-        selection_metric = self.params["train"].get("selection_metric", "F1")
+        selection_metric = self.params["selection"].get("metric", "F1")
         best_model_name = resultados_df.loc[
             resultados_df[selection_metric].idxmax(),
             "Modelo",
