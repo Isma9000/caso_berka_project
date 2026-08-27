@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    image: caso-berka-api
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: docker
+      DOCKER_MODEL_PATH: /app/models/docker_production
+    env_file:
+      - models/docker_meta.env

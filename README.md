@@ -104,6 +104,103 @@ dvc metrics diff HEAD
 
 Hiperparámetros en [`params.yaml`](params.yaml). Tras editarlos, vuelve a correr `dvc repro`.
 
+### 8. MLflow (tracking local + Model Registry)
+
+El entrenamiento registra experimentos en **SQLite local** (`mlflow.db`) y artefactos en `mlruns/`. No hace falta un servidor remoto. En Python 3.14 se instala MLflow 3.x (MLflow 2.x exige `pyarrow<20`, sin wheel para 3.14); el registry escribe tanto el *stage* `Production` como el alias `@Production`.
+
+```bash
+# Entrenar, loguear métricas/artefactos y promover el PyFunc a Production
+make mlflow-train
+# equivalente:
+python -m caso_berka_model.mlflow_engine.run
+
+# UI en http://127.0.0.1:5000
+make mlflow-ui
+# equivalente:
+mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
+
+# Serving REST genérico MLflow del modelo en Production (puerto 8080)
+make mlflow-serve
+
+# API FastAPI custom (puerto 8000): carga Berka_BuenCliente@Production
+make api-serve
+```
+
+La API expone `GET /`, `GET /health` y `POST /predict` (features ya preprocesadas). Docs interactivas en `http://127.0.0.1:8000/docs`.
+
+Ejemplo de inferencia:
+
+```bash
+curl -s http://127.0.0.1:8000/predict \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "data": [{
+      "birth_number": 591001.0,
+      "date": 931008.0,
+      "cantidad_ingresos": 0.97,
+      "total_egresos": -0.18,
+      "cantidad_egresos": 1.94,
+      "tiene_prestamo": 0.0,
+      "monto_prestamo": -0.33,
+      "tiene_tarjeta": 0.0
+    }]
+  }'
+```
+
+También puedes lanzar el entry point declarativo:
+
+```bash
+mlflow run . --env-manager local
+```
+
+Configuración en [`params.yaml`](params.yaml) (`mlflow.*`): experimento `Berka_Credit_Classification`, modelo registrado `Berka_BuenCliente`, umbral de decisión `0.65`. `make train` y el stage DVC `train` también escriben el run si `mlflow.enabled` es `true`.
+
+### 9. Docker (API FastAPI)
+
+La imagen sirve la misma API en el puerto **8000**. En Docker el modelo se carga desde una ruta fija (`models/docker_production`) porque el Registry local guarda rutas absolutas del host que no existen dentro del contenedor.
+
+**Requisitos:** Docker instalado y un modelo ya promovido a Production (`make mlflow-train` si aún no existe `mlflow.db` / `mlruns/`).
+
+```bash
+# Copia el PyFunc Production a models/docker_production y construye la imagen
+make docker-build
+
+# Levanta el contenedor (http://127.0.0.1:8000)
+make docker-run
+
+# Alternativa con Compose (tras make docker-prepare-model o make docker-build)
+docker compose up --build
+```
+
+Comprobación:
+
+```bash
+curl -s http://127.0.0.1:8000/health
+```
+
+Inferencia (mismo contrato que en local):
+
+```bash
+curl -s http://127.0.0.1:8000/predict \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "data": [{
+      "birth_number": 591001.0,
+      "date": 931008.0,
+      "cantidad_ingresos": 0.97,
+      "total_egresos": -0.18,
+      "cantidad_egresos": 1.94,
+      "tiene_prestamo": 0.0,
+      "monto_prestamo": -0.33,
+      "tiene_tarjeta": 0.0
+    }]
+  }'
+```
+
+Tras promover una nueva versión a Production, vuelve a ejecutar `make docker-build` (o `make docker-prepare-model` y luego el build). Docs interactivas: `http://127.0.0.1:8000/docs`.
+
+Para desarrollo local sin Docker sigue usando `make api-serve`.
+
 ---
 
 ## Git vs DVC: qué va en cada uno
@@ -116,14 +213,16 @@ Hiperparámetros en [`params.yaml`](params.yaml). Tras editarlos, vuelve a corre
 | Datos crudos (`data/raw/**/*.asc`) | No | Sí | `data/.gitignore` + `*.asc` |
 | Dataset procesado (`data/processed/tabla_minable.csv`) | No | Sí | `*.csv` |
 | Modelo (`models/best_model.joblib`) | No | Sí | `models/.gitignore` |
+| Artefacto Docker (`models/docker_production/`, `models/docker_meta.env`) | No | — | `models/.gitignore` (build artifact) |
 | Métricas DVC (`metrics/eval.json`, `metrics/plots.csv`) | Sí | — | excepción `!metrics/*` |
+| Tracking MLflow (`mlflow.db`, `mlruns/`) | No | — | `mlflow.db`, `mlruns/`, `mlartifacts/` |
 | Gráficos (`reports/figures/*.png`) | No | — | `*.png` |
 | Reportes CSV (`reports/*.csv`) | No | — | `*.csv` |
 | Entorno (`.venv/`) | No | — | `.venv` |
 | Cache DVC (`.dvc/cache/`) | No | — | `.dvc/.gitignore` |
 | Remote local (`../dvc_storage_remote/`) | No | — | `dvc_storage_remote/` |
 
-Regla práctica: **Git** guarda código, configuración y punteros `.dvc`; **DVC** guarda datos y modelos pesados. Nunca subas `.asc`, CSV de datos ni `.joblib` a Git.
+Regla práctica: **Git** guarda código, configuración y punteros `.dvc`; **DVC** guarda datos y modelos pesados. Nunca subas `.asc`, CSV de datos ni `.joblib` a Git. `models/docker_production/` se genera con `make docker-prepare-model` antes del build y no se versiona.
 
 ---
 
@@ -136,6 +235,8 @@ Dataset: (5369, 21) | predictoras: (5369, 8)
 Mejor modelo seleccionado: Random Forest
 [ModelTrainer] Modelo guardado en: .../models/best_model.joblib
 [Evaluator] Métricas guardadas en: .../metrics/
+[MLflow] Run padre=... | mejor=Random Forest | F1=0.97...
+[Registry] Modelo 'Berka_BuenCliente' versión 1 asignado al alias Production
 ```
 
 Verifica que los archivos pesados **no** están en el índice de Git:
@@ -155,8 +256,9 @@ Comandos de salud del proyecto:
 
 ```bash
 dvc status          # Data and pipelines are up to date.
-pytest tests        # 2 passed
+pytest tests        # tests de datos + tracking MLflow
 dvc metrics show    # accuracy ~0.98, f1_score ~0.97
+ls mlflow.db        # backend SQLite local tras make mlflow-train
 ```
 
 ---
@@ -164,7 +266,9 @@ dvc metrics show    # accuracy ~0.98, f1_score ~0.97
 ```
 ├── LICENSE            <- Open-source license if one is chosen
 ├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
-├── params.yaml        <- Hiperparámetros del pipeline DVC
+├── MLproject          <- Entry point declarativo: mlflow run . --env-manager local
+├── python_env.yaml    <- Entorno reproducible para MLflow Projects
+├── params.yaml        <- Hiperparámetros del pipeline DVC y config MLflow
 ├── dvc.yaml           <- Stages preprocess y train
 ├── README.md          <- The top-level README for developers using this project.
 ├── data
@@ -204,12 +308,26 @@ dvc metrics show    # accuracy ~0.98, f1_score ~0.97
     │
     ├── features.py             <- Code to create features for modeling
     │
+    ├── api                     <- FastAPI: carga Production y /predict
+    │   ├── main.py             <- App uvicorn (make api-serve)
+    │   ├── model_loader.py     <- Puente al Model Registry
+    │   └── schemas.py          <- Contrato de 8 features preprocesadas
+    │
     ├── modeling                
     │   ├── __init__.py 
     │   ├── predict.py          <- Code to run model inference with trained models          
     │   └── train.py            <- Code to train models
     │
-    └── plots.py                <- Code to create visualizations
+    ├── plots.py                <- Code to create visualizations
+    │
+    └── mlflow_engine           <- Tracking, PyFunc, evaluate y Model Registry
+        ├── lineage.py          <- Hashes Git/DVC para tags de trazabilidad
+        ├── artifacts.py        <- Matriz de confusión y curva ROC
+        ├── pyfunc.py           <- Wrapper con umbral de decisión
+        ├── evaluator.py        <- mlflow.evaluate sobre el modelo sklearn
+        ├── trainer.py          <- Nested runs y registro del mejor modelo
+        ├── registry.py         <- Promoción a Production
+        └── run.py              <- Orquestación: python -m caso_berka_model.mlflow_engine.run
 ```
 
 --------

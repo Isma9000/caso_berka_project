@@ -20,9 +20,11 @@ stages:
       - caso_berka_model/modeling/train.py
       - caso_berka_model/modeling/predict.py
       - caso_berka_model/plots.py
+      - caso_berka_model/mlflow_engine
       - data/processed/tabla_minable.csv
 
     params:
+<<<<<<< HEAD
       - split.test_size
       - split.random_state
       - logistic_regression.max_iter
@@ -39,6 +41,14 @@ stages:
       - random_forest.class_weight
       - selection.metric
 
+=======
+      - prepare.split_ratio
+      - prepare.random_state
+      - train.n_estimators
+      - train.max_depth
+      - train.target_col
+      - mlflow.enabled
+>>>>>>> develop
     outs:
       - models/best_model.joblib
 
